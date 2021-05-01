@@ -6,43 +6,26 @@ import user
 numOfQuestions = utils.countOfQuestions()
 tb = telebot.TeleBot('1305724214:AAHQ_G-_ztkUW2xLMMz6vO8HBWLhPP7nFX0')      
 
-commands = ['help', 'start']
-admincmd = ['add', 'remove']
-ADMIN_ID = 902287111
+commands = ['help', 'start', 'test']
+admincmd = ['remove']
+ADMIN_ID = 902287112
 general = 0
 user1 = user.User("null", "null", "null")
 
-
- 
-@tb.message_handler(commands=[commands[1]])
-def start(message):
-	 
-	tb.send_message(message.chat.id,  "Приветствую! Напишите нам свое имя!")
-	tb.register_next_step_handler(message, startingMeat) 
-
-def startingMeat(message):
-	try:  
-		global user1
-		global general
-		user1.name = message.text
-		tb.send_message(message.chat.id, f"Thank you, {user1.name}!" )
-		for i in range(0, numOfQuestions):
-			tb.register_next_step_handler(message, startingSec)
-
-	except Exception as e:		
-   		tb.reply_to(message, 'global error!')
-   		tb.send_message(ADMIN_ID, f'[ADMIN] Произошла ошибка: {e}')  
-def startingSec(message):
-	global general
-	try:
-		print(general)
-		strin = utils.description(0) 
-		tb.send_message(message.chat.id, strin) 
-		general = general + 1
-	except Exception as e:
-		tb.send_message(message.chat.id, f"Sorry, {user1.name}, I'm have a technical problem" )
-		print(e)
-
+test = user.Test("null", "null")
+@tb.message_handler(commands=[commands[2]])
+def test(message):
+	tb.send_message(message.chat.id, "Итак, теперь анкетированный тест:")
+	tb.send_message(message.chat.id, "Напишите немного о себе")
+	tb.register_next_step_handler(message, testuser)
+def testuser(message):
+	test.description = message.text
+	tb.send_message(message.chat.id, "И к концу скиньте ссылку на linkiedin/github")
+	tb.register_next_step_handler(message, link) 
+def link(message):
+	test.test_link = message.text
+	utils.addtest(test, user1)
+	tb.send_message(message.chat.id, "Спасибо за внимание")
 	
 @tb.message_handler(commands=[commands[0]])
 def start(message):
@@ -55,7 +38,18 @@ def start(message):
 			str += "/" + command + '\n' 
 	tb.send_message(message.chat.id, f"Список комманд: \n{str}")
 
+
 @tb.message_handler(commands=[admincmd[0]])
+def remove(message):
+	tb.send_message(message.chat.id, "Введите id человека, которого хотите удалить")
+	tb.register_next_step_handler(message, deleteUser)
+def deleteUser(message):
+	try:
+		utils.deleteUser(int(message.text))
+		tb.send_message(message.chat.id, "Человек успешно удален!")
+	except:
+		tb.send_message("Введенный текст не соответствует id!")
+@tb.message_handler(commands=[commands[1]])
 def addUser(message):
 	tb.send_message(message.chat.id, "Введите имя юсера:" )
 	tb.register_next_step_handler(message, add)
@@ -69,9 +63,13 @@ def adduserTelephone(message):
 	tb.register_next_step_handler(message, adduserEmail)
 def adduserEmail(message):
 	user1.email = message.text
-	utils.addUser(user1)
-	tb.send_message(message.chat.id, "Успешно! юсер был залит в базу!")
- 
+	try:
+		utils.addUser(user1)
+		tb.send_message(message.chat.id, "Успешно! юсер был залит в базу!")
+		tb.send_message(message.chat.id, "Напишите комманду /test для продолжения!")
+	except:
+		tb.send_message(message.chat.id, "Человек создан или возникла техническая ошибка!") 
+
 @tb.message_handler(func=lambda message: True, content_types=['text'])
 def checkdata(message):
 	str = ""

@@ -2,7 +2,7 @@ import psycopg2
 conn = psycopg2.connect(dbname='CompanySystem', user='postgres', 
                         password='123', host='localhost', port = '8888')
 cursor = conn.cursor()
-
+conn.autocommit = True
 
  
 def printAllNames(tb, message):
@@ -15,7 +15,9 @@ def printAllNames(tb, message):
 		cities += f"{r[0]} | {r[1]} \n"
 
 	tb.send_message(chatid, cities)  
-
+def getUserId(username):
+	cursor.execute(f"SELECT user_id FROM users WHERE user_name = '" + f"{username}" + "'")
+	return cursor.fetchone()[0]
 def countOfUsers():
 	cursor.execute('SELECT count(user_id) FROM users')
 	return cursor.fetchone()[0]
@@ -25,7 +27,9 @@ def countOfQuestions():
 def description(general):
 	cursor.execute(f'SELECT question_description FROM question WHERE question_id = {general} ORDER BY question_id')
 	return cursor.fetchone()[0]
- 
-def addUser(user): 
-    values = (countOfUsers(), user.name, user.phonenumber, user.email)
-    cursor.execute(f'INSERT INTO users (user_id, user_name, user_phoneNumber, user_email) VALUES {values}')
+def addUser(employee):  
+    cursor.execute(f"INSERT INTO users (user_id, user_name, user_phoneNumber, user_email) VALUES ({countOfUsers()+4}," + f"'{employee.name}'," + f"'{employee.phonenumber}'," + f"'{employee.email}')")
+def deleteUser(id):
+	cursor.execute(f"DELETE FROM users WHERE user_id = {id}")
+def addtest(test, employee):  
+    cursor.execute(f"INSERT INTO tests VALUES ({countOfUsers()}," + f"'{test.description}'," + f"'{test.test_link}'," + f"'{getUserId(employee.name)}')")

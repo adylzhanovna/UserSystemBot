@@ -2,6 +2,7 @@ import telebot
 from telebot import types
 import utils
 import user
+import csvload
 
 numOfQuestions = utils.countOfQuestions()
 tb = telebot.TeleBot('1305724214:AAHQ_G-_ztkUW2xLMMz6vO8HBWLhPP7nFX0')      
@@ -15,9 +16,13 @@ user1 = user.User("null", "null", "null")
 test = user.Test("null", "null")
 @tb.message_handler(commands=[commands[2]])
 def test(message):
-	tb.send_message(message.chat.id, "Итак, теперь анкетированный тест:")
-	tb.send_message(message.chat.id, "Напишите немного о себе")
-	tb.register_next_step_handler(message, testuser)
+	if user1.name == "null":
+		tb.send_message(message.chat.id, "Для начала введите /start комманду!")
+	else:
+		tb.send_message(message.chat.id, "Итак, теперь анкетированный тест:")
+		tb.send_message(message.chat.id, "Напишите немного о себе")
+		tb.register_next_step_handler(message, testuser)
+	 
 def testuser(message):
 	test.description = message.text
 	tb.send_message(message.chat.id, "И к концу скиньте ссылку на linkiedin/github")
@@ -26,6 +31,7 @@ def link(message):
 	test.test_link = message.text
 	utils.addtest(test, user1)
 	tb.send_message(message.chat.id, "Спасибо за внимание")
+	csvload.createCSVFile(utils.listOfTests())
 	
 @tb.message_handler(commands=[commands[0]])
 def start(message):
@@ -44,11 +50,12 @@ def remove(message):
 	tb.send_message(message.chat.id, "Введите id человека, которого хотите удалить")
 	tb.register_next_step_handler(message, deleteUser)
 def deleteUser(message):
-	try:
-		utils.deleteUser(int(message.text))
-		tb.send_message(message.chat.id, "Человек успешно удален!")
-	except:
-		tb.send_message("Введенный текст не соответствует id!")
+	if message.chat.id == ADMIN_ID:
+		try:
+			utils.deleteUser(int(message.text))
+			tb.send_message(message.chat.id, "Человек успешно удален!")
+		except:
+			tb.send_message("Введенный текст не соответствует id!")
 @tb.message_handler(commands=[commands[1]])
 def addUser(message):
 	tb.send_message(message.chat.id, "Введите имя юсера:" )
